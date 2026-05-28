@@ -11,10 +11,11 @@ Then for the names and offsets printing, a 3rd visitor could be used but by stor
 
 More technically, all the information for each class will be stored in a helper class called ClassData and respectively all the information for each method will be in class MethData.
 We obviously make the fields all public since the deafult is private so we can access them from all the other files.
-For easier access reasons we use ArrayList for any connected items.
 
 We will repeatedly need to access classes, fields and methods by name.
 We also need to keep the insertion order (for the future printing)
+
+Since we dont care about tje pffset priting for the parameters maybe we keep them as list instead of linked hashmap?
 
 For the insertion order maybe we could keep the line we found it in as an
 

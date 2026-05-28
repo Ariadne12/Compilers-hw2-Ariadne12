@@ -1,12 +1,13 @@
+import java.util.*;
+
 import syntaxtree.*;
 import visitor.*;
 
 
-class MyVisitor extends GJDepthFirst<String, Void>{
-    // The full symbol table
-    public Map<String, ClassData> classes = new LinkedHashMap<>();
+class SymbolTableVisitor extends GJDepthFirst<String, Void>{
+    public LinkedHashMap<String, ClassData> classes = new LinkedHashMap<>();
 
-    private ClassData currentClass;
+    private ClassData currentClass = null;
     private MethData currentMethod = null;
     /**
      * f0 -> "class"
@@ -56,7 +57,7 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         n.f0.accept(this, argu);    // just visits token
         
         String classname = n.f1.accept(this, argu);     // get class name
-        System.out.println("Class: " + classname);
+        System.out.println("Normal! Class: " + classname);
 
         currentClass = new ClassData(classname);
         classes.put(classname, currentClass);
@@ -90,13 +91,15 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         n.f0.accept(this, argu);
 
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        System.out.println("Inherited! Class: " + classname);
 
         n.f2.accept(this, argu);
         String parentname = n.f3.accept(this, argu);    // f3, identifier is from parent class, since it is after f2:extends
         
         currentClass = new ClassData(classname);
         currentClass.parent = parentname;
+
+        classes.put(classname, currentClass);
 
         n.f4.accept(this, argu);
         System.out.println("Fields: ");
@@ -119,7 +122,7 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         String _ret=null;
         String type = n.f0.accept(this, argu);
         String varname = n.f1.accept(this, argu);
-        System.out.println(var + " " + type);
+        System.out.println(varname + " " + type);
 
         if (currentMethod != null) {
             // inside method: local variables
@@ -164,9 +167,8 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");
 
-        currentMethod = null;
-
         super.visit(n, argu);   // Traverse inside method
+        currentMethod = null;
         return null;
     }
 
@@ -217,8 +219,10 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         String type = n.f0.accept(this, null);
         String name = n.f1.accept(this, null);
 
-        currentMethod.paramTypes.add(type);
-        currentMethod.paramNames.add(name);
+        if (currentMethod != null) {
+            currentMethod.paramTypes.add(type);
+            currentMethod.paramNames.add(name);
+        }
         return type + " " + name;
     }
 

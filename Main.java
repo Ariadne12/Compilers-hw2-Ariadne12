@@ -22,18 +22,17 @@ public class Main {
                 System.err.println("Program parsed successfully.");
 
                 // New visitor creation
+                System.out.println("NEW VISITOR");
                 SymbolTableVisitor eval1 = new SymbolTableVisitor();
                 root.accept(eval1, null);
 
                 // debugging
-                // System.out.println(v.classes.keySet());
-                // for (c in classes) {
-                //     System.out.println(c.fields);
-                // }
+                System.out.println("debug mode");
+                debug_print(eval1);
 
                 // New visitor creation
-                TypeCheckingVisitor eval2 = new TypeCheckingVisitor();
-                root.accept(eval2, null);
+                //TypeCheckingVisitor eval2 = new TypeCheckingVisitor();
+                //root.accept(eval2, null);
             }
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
@@ -49,6 +48,38 @@ public class Main {
                     System.err.println(ex.getMessage());
                 }
             }
+        }
+    }
+
+    public static void debug_print(SymbolTableVisitor v) {
+        // Debug print
+        for (String className : v.classes.keySet()) {
+            ClassData c = v.classes.get(className);
+            System.out.println("this class has " + c.methods.size() + "methods");
+
+            System.out.println("Class: " + className);
+
+            if (c.parent != null)
+                System.out.println("  extends: " + c.parent);
+
+            System.out.println("  Fields:");
+            for (String f : c.fields.keySet()) {
+                System.out.println("    " + f + " : " + c.fields.get(f));
+            }
+
+            System.out.println("  Methods:");
+            for (String m : c.methods.keySet()) {
+                MethData mi = c.methods.get(m);
+
+                System.out.print("    " + mi.returnType + " " + m + "(");
+                for (int i = 0; i < mi.paramTypes.size(); i++) {
+                    System.out.print(mi.paramTypes.get(i) + " " + mi.paramNames.get(i));
+                    if (i < mi.paramTypes.size() - 1) System.out.print(", ");
+                }
+                System.out.println(")");
+            }
+
+            System.out.println();
         }
     }
 }
