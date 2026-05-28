@@ -22,11 +22,17 @@ public class Main {
                 System.err.println("Program parsed successfully.");
 
                 // New visitor creation
-                MyVisitor eval1 = new SymbolTableVisitor();
+                SymbolTableVisitor eval1 = new SymbolTableVisitor();
                 root.accept(eval1, null);
 
+                // debugging
+                // System.out.println(v.classes.keySet());
+                // for (c in classes) {
+                //     System.out.println(c.fields);
+                // }
+
                 // New visitor creation
-                MyVisitor eval2 = new TypeCheckingVisitor();
+                TypeCheckingVisitor eval2 = new TypeCheckingVisitor();
                 root.accept(eval2, null);
             }
             catch(ParseException ex){
