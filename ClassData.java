@@ -33,14 +33,19 @@ public class ClassData {
     public void addMethod(MethData currentMethod) throws Exception {
         // see if it is method overloading
         // if name + all parameter types are the same it's not overloading and it's illegal
+        // same also counts as subtype-supertype pairs
         String name = currentMethod.name;
         if(methods.containsKey(name)) {     // same name
             List<MethData> lm = methods.get(name);
             outerloop:
             for(MethData m : lm) {      // need to check for all methods with same name
-                if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;      // different sizes are always allowed
+                // different sizes are always allowed
+                if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;
                 for (int i = 0; i < m.paramTypes.size(); i++) {     // need to check for all the parameters as well
-                    if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i))) {     // if at least one of them is different its overloading
+                    // if at least one of them is different its overloading
+                    if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i)) ||
+                        (isSubtype(m.paramTypes.get(i), currentMethod.paramTypes.get(i)) == false) ||
+                        (isSubtype(currentMethod.paramTypes.get(i), m.paramTypes.get(i)) == false)) {
                         // add method on the list
                         this.methods.get(name).add(currentMethod);
                         break outerloop;
@@ -56,6 +61,4 @@ public class ClassData {
         // check for overriding
 
     }
-
-    
 }
