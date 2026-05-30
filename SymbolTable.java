@@ -11,6 +11,29 @@ public class SymbolTable {
         return classes.get(className);
     }
 
+    public MethData findMethod(MethData currentMethod, ClassData currentClass) {
+        ClassData c = currentClass;
+        String methodName = currentMethod.name;
+        while (c != null) {
+            if (c.methods.containsKey(methodName)) {
+                List<MethData> lm = c.methods.get(methodName);
+                for(MethData m : lm) {
+                    if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;
+                    for (int i = 0; i < m.paramTypes.size(); i++) {
+                        if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i))) {
+                            break;
+                        }
+                    }
+                    return m;
+                }
+            }
+            if (c.parent == null)
+                break;
+            c = classes.get(c.parent);
+        }
+        return null;
+    }
+
     public String findVar(String name, MethData currentMethod, ClassData currentClass) {
         // inside the method
         // local variables
