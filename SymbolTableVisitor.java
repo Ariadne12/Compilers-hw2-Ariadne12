@@ -3,7 +3,6 @@ import java.util.*;
 import syntaxtree.*;
 import visitor.*;
 
-
 class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     public LinkedHashMap<String, ClassData> classes = new LinkedHashMap<>();
 
@@ -126,10 +125,12 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
 
         if (currentMethod != null) {
             // inside method: local variables
-            currentMethod.localVars.put(varname, type);
+            // check if we have seen this variable before
+            currentMethod.addLocal(varname, type);
         } 
         else if (currentClass != null) {
             // inside class: fields
+            // check if we have seen this field before
             currentClass.fields.put(varname, type);
         }
 
@@ -203,7 +204,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(FormalParameterTail n, Void argu) throws Exception {
         String ret = "";
-        for ( Node node: n.f0.nodes) {
+        for (syntaxtree.Node node: n.f0.nodes) {
             ret += ", " + node.accept(this, null);
         }
 
@@ -220,8 +221,8 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         String name = n.f1.accept(this, null);
 
         if (currentMethod != null) {
-            currentMethod.paramTypes.add(type);
-            currentMethod.paramNames.add(name);
+            // check if we have seen this parameter before in this method
+            currentMethod.addParam(name, type);
         }
         return type + " " + name;
     }
