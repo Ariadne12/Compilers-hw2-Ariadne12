@@ -131,7 +131,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         else if (currentClass != null) {
             // inside class: fields
             // check if we have seen this field before
-            currentClass.fields.put(varname, type);
+            currentClass.addField(varname, type);
         }
 
         super.visit(n, argu);   //?
