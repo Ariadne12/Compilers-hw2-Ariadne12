@@ -25,7 +25,6 @@ public class MethData {
                 " already defined in method " +
                 this.name
             );
-
         localVars.put(name, type);
     }
 

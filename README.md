@@ -2,6 +2,10 @@
 
 ΑΜ: 1115202300083
 
+How to run:
+make
+for some reason i havent had time to investigate it puts import org.w3c.dom.Node; on the top of TypeCheckingVisitor. Remove that.
+
 We got MiniJava grammar in JavaCC form and we start by using the JTB tool to convert it into a grammar that produces class hierarchies.
 Now we have the syntax tree (AST) and the visitor directories.
 
@@ -20,3 +24,11 @@ Since we dont care about tje pffset priting for the parameters maybe we keep the
 For the insertion order maybe we could keep the line we found it in as an
 
 We are going to implement custom logic for the nodes we care about, for the others the default implementation from GJDepthFirst is going to be used automatically. So no expressions, statements, if/while, arithmetic
+
+While the symbol table gets filled is really practical to do some basic checking at that stage. For example we can easily check if a variable, a method or a class get reinitialized. We can also differentiate if there is any overloading or overriding happening.
+
+At first i was thinking of combining that check happening in STV and the lookup of anything from the symbol table that would be needed in TPV since they had a lot of similar structure/code, but it became kinda complicated so i decided on simplicity and divided the 2 operations.
+
+I added those checks directly at the ClassData and MethData.
+
+Now onto the typechecking, to see if everything is correct. Going through the file a second time this visitor.

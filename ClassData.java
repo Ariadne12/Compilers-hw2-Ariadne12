@@ -9,7 +9,8 @@ public class ClassData {
     public LinkedHashMap<String, String> fields = new LinkedHashMap<>();
 
     // <method name, method data>, key: method name
-    public LinkedHashMap<String, MethData> methods = new LinkedHashMap<>();
+    // a certain name can return more than one methods (overloading)
+    public LinkedHashMap<String, List<MethData>> methods = new LinkedHashMap<>();
 
     public ClassData(String name) {
         this.name = name;
@@ -26,28 +27,35 @@ public class ClassData {
         fields.put(name, type);
     }
 
-    public void addMethod(String name, String returnType) throws Exception {
+    // give current method
+    // overloading: same name, 
+    // overriding: same name, same return type, same arguments typs for ALL
+    public void addMethod(MethData currentMethod) throws Exception {
         // see if it is method overloading
-        // if name + type + all parameter types are the same it's not overloading and it's illegal
-        if(methods.containsKey(name)) {
-            MethData m = methods.get(name);     // the method that will 
-            if(m.returnType.equals(returnType)) {
-                for (int i = 0; i < m.paramNames.size(); i++) {
-                    if (m.paramNames.get(i).equals(name)) {
-                        throw new Exception(
-                            "Variable " + name +
-                            " already defined in method " +
-                            this.name
-                        );
+        // if name + all parameter types are the same it's not overloading and it's illegal
+        String name = currentMethod.name;
+        if(methods.containsKey(name)) {     // same name
+            List<MethData> lm = methods.get(name);
+            outerloop:
+            for(MethData m : lm) {      // need to check for all methods with same name
+                if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;      // different sizes are always allowed
+                for (int i = 0; i < m.paramTypes.size(); i++) {     // need to check for all the parameters as well
+                    if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i))) {     // if at least one of them is different its overloading
+                        // add method on the list
+                        this.methods.get(name).add(currentMethod);
+                        break outerloop;
                     }
                 }
+                throw new Exception(
+                    "Method " + name +
+                    " already defined in class " +
+                    this.name
+                );
             }
-            throw new Exception(
-                "Field " + name +
-                " already defined in class " +
-                this.name
-            );
-        
         }
+        // check for overriding
+
     }
+
+    
 }
