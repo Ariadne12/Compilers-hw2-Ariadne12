@@ -4,7 +4,9 @@ import syntaxtree.*;
 import visitor.*;
 
 class SymbolTableVisitor extends GJDepthFirst<String, Void>{
-    public LinkedHashMap<String, ClassData> classes = new LinkedHashMap<>();
+    //public LinkedHashMap<String, ClassData> classes = new LinkedHashMap<>();
+    SymbolTable symbolTable = new SymbolTable();
+
 
     private ClassData currentClass = null;
     private MethData currentMethod = null;
@@ -59,7 +61,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         System.out.println("Normal! Class: " + classname);
 
         currentClass = new ClassData(classname);
-        classes.put(classname, currentClass);
+        symbolTable.classes.put(classname, currentClass);
 
         n.f2.accept(this, argu);
         System.out.println("Fields: ");
@@ -98,7 +100,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         currentClass = new ClassData(classname);
         currentClass.parent = parentname;
 
-        classes.put(classname, currentClass);
+        symbolTable.classes.put(classname, currentClass);
 
         n.f4.accept(this, argu);
         System.out.println("Fields: ");
@@ -163,7 +165,8 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         String methodName = n.f2.accept(this, null);
 
         currentMethod = new MethData(methodName, returnType);
-        currentClass.methods.put(methodName, currentMethod);
+        currentClass.addMethod(currentMethod);
+        symbolTable.validateOverride(currentClass, currentMethod);
 
         System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");

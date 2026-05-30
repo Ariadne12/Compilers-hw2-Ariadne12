@@ -41,4 +41,17 @@ public class MethData {
         paramNames.add(name);
         paramTypes.add(type);
     }
+
+    // true -> same name, same types on all parameters
+    public boolean compareMethods(MethData other) {
+        if (!name.equals(other.name))
+            return false;
+        if (paramTypes.size() != other.paramTypes.size())
+            return false;
+        for (int i = 0; i < paramTypes.size(); i++) {
+            if (!paramTypes.get(i).equals(other.paramTypes.get(i)))
+                return false;
+        }
+        return true;
+    }
 }

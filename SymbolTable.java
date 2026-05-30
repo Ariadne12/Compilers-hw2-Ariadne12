@@ -11,6 +11,7 @@ public class SymbolTable {
         return classes.get(className);
     }
 
+    // i think its wrong
     public MethData findMethod(MethData currentMethod, ClassData currentClass) {
         ClassData c = currentClass;
         String methodName = currentMethod.name;
@@ -77,5 +78,34 @@ public class SymbolTable {
             c = classes.get(c.parent);
         }
         return false;
+    }
+
+    public void validateOverride(ClassData currentClass, MethData currentMethod) throws Exception {
+        if (currentClass.parent == null) return;
+        ClassData ancestor = classes.get(currentClass.parent);
+        while (ancestor != null) {
+            List<MethData> sameNameMethods = ancestor.methods.get(currentMethod.name);
+            if (sameNameMethods != null) {
+                for (MethData ancestorMethod : sameNameMethods) {
+                    if (ancestorMethod.compareMethods(currentMethod)) {
+                        // override candidate found
+                        if (!ancestorMethod.returnType.equals(currentMethod.returnType)) {
+                            throw new Exception(
+                                "Invalid override of method "
+                                + currentMethod.name
+                                + " in class "
+                                + currentClass.name
+                                + ". Return type differs from ancestor."
+                            );
+                        }
+                        // valid override
+                        return;
+                    }
+                }
+            }
+            if (ancestor.parent == null)
+                break;
+            ancestor = classes.get(ancestor.parent);
+        }
     }
 }
