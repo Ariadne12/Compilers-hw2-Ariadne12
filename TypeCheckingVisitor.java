@@ -240,7 +240,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // statements
-    
+
     // assignment
     // Finally, the assignment A a = new B(); when B extends A is correct, 
     // and the same applies when a method expects a parameter of type A and a B instance is given instead
@@ -261,6 +261,38 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
             throw new RuntimeException(
                 "Incompatible types in assignment");
         }
+
+        return null;
+    }
+
+    @Override
+    public String visit(ArrayAssignmentStatement n, Void argu) throws Exception {
+        String arrName = n.f0.accept(this, null);
+        String arrType = symbolTable.findVar(arrName, currentMethod, currentClass);
+
+        if(arrType == null)
+            throw new Exception(
+                "Variable " + arrName + " has not been declared"
+            );
+
+        if(!arrType.equals("int[]"))
+            throw new Exception(
+                arrName + " is not an int[]"
+            );
+
+        String indexType = n.f2.accept(this, null);
+
+        if(!indexType.equals("int"))
+            throw new Exception(
+                "Array index must be int"
+            );
+
+        String assignedValueType = n.f5.accept(this, null);
+
+        if(!assignedValueType.equals("int"))
+            throw new Exception(
+                "Array element must be int"
+            );
 
         return null;
     }
