@@ -27,37 +27,18 @@ public class ClassData {
         fields.put(name, type);
     }
 
-    // give current method
     // overloading: same name, 
     // overriding: same name, same return type, same arguments typs for ALL
-    public void addMethod(MethData currentMethod) throws Exception {
-        // see if it is method overloading
-        // if name + all parameter types are the same it's not overloading and it's illegal
-        // same also counts as subtype-supertype pairs
-        String name = currentMethod.name;
-        if(methods.containsKey(name)) {     // same name
-            List<MethData> lm = methods.get(name);
-            outerloop:
-            for(MethData m : lm) {      // need to check for all methods with same name
-                // different sizes are always allowed
-                if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;
-                for (int i = 0; i < m.paramTypes.size(); i++) {     // need to check for all the parameters as well
-                    // if at least one of them is different its overloading
-                    if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i)) ||
-                        (isSubtype(m.paramTypes.get(i), currentMethod.paramTypes.get(i)) == false) ||
-                        (isSubtype(currentMethod.paramTypes.get(i), m.paramTypes.get(i)) == false)) {
-                        // add method on the list
-                        this.methods.get(name).add(currentMethod);
-                        break outerloop;
-                    }
-                }
-                throw new Exception(
-                    "Method " + name +
-                    " already defined in class " +
-                    this.name
-                );
-            }
+    public void addMethod(MethData currentMethod, boolean overload) throws Exception {
+        // if it already exists
+        if (overload) {
+            methods.get(currentMethod.name).add(currentMethod);
         }
-        // check for overriding in STV
+        else {
+            // add new entry on the method hashmap
+            List<MethData> newml = new ArrayList<MethData>();
+            newml.add(currentMethod);
+            methods.put(currentMethod.name, newml);
+        }
     }
 }

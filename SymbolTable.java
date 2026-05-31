@@ -80,6 +80,29 @@ public class SymbolTable {
         return false;
     }
 
+    // if name + all parameter types are the same it's not overloading and it's illegal
+    // same also counts for subtype-supertype pairs in parameter types
+    public boolean validateOverload(ClassData currentClass, MethData currentMethod) throws Exception {
+        String name = currentMethod.name;
+        if(currentClass.methods.containsKey(name)) {     // same name
+            List<MethData> lm = currentClass.methods.get(name);
+            for(MethData m : lm) {      // need to check for all methods with same name
+                System.err.println("methname" + m.name);
+                if(currentMethod.compareMethods(m)){
+                    throw new Exception(
+                        "Method " + name +
+                        " already defined in class " +
+                        currentClass.name
+                    );
+                }
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     public void validateOverride(ClassData currentClass, MethData currentMethod) throws Exception {
         if (currentClass.parent == null) return;
         ClassData ancestor = classes.get(currentClass.parent);

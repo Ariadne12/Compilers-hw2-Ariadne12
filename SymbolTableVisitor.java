@@ -4,9 +4,7 @@ import syntaxtree.*;
 import visitor.*;
 
 class SymbolTableVisitor extends GJDepthFirst<String, Void>{
-    //public LinkedHashMap<String, ClassData> classes = new LinkedHashMap<>();
     SymbolTable symbolTable = new SymbolTable();
-
 
     private ClassData currentClass = null;
     private MethData currentMethod = null;
@@ -36,7 +34,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         System.out.println("Class: " + classname);
 
         currentClass = new ClassData(classname);
-        classes.put(classname, currentClass);
+        symbolTable.classes.put(classname, currentClass);
 
         super.visit(n, argu);
 
@@ -165,9 +163,14 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         String methodName = n.f2.accept(this, null);
 
         currentMethod = new MethData(methodName, returnType);
-        currentClass.addMethod(currentMethod);
+        // see if it is method overloading
+        boolean overload = false;
+        if (symbolTable.validateOverload(currentClass, currentMethod)) overload = true;
         symbolTable.validateOverride(currentClass, currentMethod);
-
+        // if none of them have poped an exception, it is a valid method (in terms of either overloading or overriding)
+        // so we can add it
+        currentClass.addMethod(currentMethod, overload);
+        
         System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");
 
