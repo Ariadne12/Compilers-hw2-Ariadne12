@@ -1,5 +1,3 @@
-import java.util.Map;
-
 import syntaxtree.*;
 import visitor.*;
 
@@ -195,6 +193,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // expressions
+    // they  must strictly return types correctly
     @Override
     public String visit(Expression n, Void argu) throws Exception {
         return n.f0.accept(this, null);
@@ -240,6 +239,8 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int[]";
     }
 
+    // statements
+    
     // assignment
     // Finally, the assignment A a = new B(); when B extends A is correct, 
     // and the same applies when a method expects a parameter of type A and a B instance is given instead
@@ -247,12 +248,63 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     public String visit(AssignmentStatement n, Void argu) throws Exception{
         String varName = n.f0.accept(this, null);
         String varType = symbolTable.findVar(varName, currentMethod, currentClass);
+        
+        // not sure
+        if (varType == null)
+            throw new Exception(
+                "Variable " + varName + " not declared"
+            );
+
         String exprType = n.f2.accept(this, null);
 
         if (!symbolTable.isSubtype(exprType, varType)) {
             throw new RuntimeException(
                 "Incompatible types in assignment");
         }
+
+        return null;
+    }
+
+    // statements
+    @Override
+    public String visit(IfStatement n, Void argu) throws Exception {
+        String condType = n.f2.accept(this, null);
+
+        if (!condType.equals("boolean"))
+            throw new Exception(
+                "If condition must be boolean"
+            );
+
+        n.f4.accept(this, null);
+        n.f6.accept(this, null);
+
+        return null;
+    }
+
+    // same limitations
+    @Override
+    public String visit(WhileStatement n, Void argu) throws Exception {
+        String condType = n.f2.accept(this, null);
+
+        if (!condType.equals("boolean"))
+            throw new Exception(
+                "While condition must be boolean"
+            );
+
+        n.f4.accept(this, null);
+
+        return null;
+    }
+
+    // minijava accepts only int in prints
+    @Override
+    public String visit(PrintStatement n, Void argu) throws Exception {
+        String exprType = n.f2.accept(this, null);
+
+        if (!exprType.equals("int"))
+            throw new Exception(
+                "println expects int"
+            );
 
         return null;
     }
