@@ -1,6 +1,8 @@
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+
 import syntaxtree.*;
 
 public class Main {
@@ -31,7 +33,7 @@ public class Main {
                 debug_print(eval1);
 
                 // New visitor creation
-                //TypeCheckingVisitor eval2 = new TypeCheckingVisitor();
+                //TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable.classes);
                 //root.accept(eval2, null);
             }
             catch(ParseException ex){
@@ -39,6 +41,9 @@ public class Main {
             }
             catch(FileNotFoundException ex){
                 System.err.println(ex.getMessage());
+            }
+            catch(Exception ex){    // for the actual semantic exceptions
+                System.out.println(ex.getMessage());
             }
             finally{
                 try{
@@ -51,10 +56,23 @@ public class Main {
         }
     }
 
+    public static void print_offsets(SymbolTableVisitor v) {
+        for (String className : v.symbolTable.classes.keySet()) {
+            ClassData c = v.symbolTable.classes.get(className);
+            for (Integer off : c.FieldOffsets.keySet()) {
+                System.out.println(className + "." + c.FieldOffsets.get(off) + " : " + off);
+            }
+            System.out.println("  Methods:");
+            for (Integer off : c.MethodOffsets.keySet()) {
+                System.out.println(className + "." + c.MethodOffsets.get(off) + " : " + off);
+            }
+            System.out.println();
+        }
+    }
+
     public static void debug_print(SymbolTableVisitor v) {
-        // Debug print
-        for (String className : v.classes.keySet()) {
-            ClassData c = v.classes.get(className);
+        for (String className : v.symbolTable.classes.keySet()) {
+            ClassData c = v.symbolTable.classes.get(className);
             System.out.println("this class has " + c.methods.size() + "methods");
 
             System.out.println("Class: " + className);
@@ -69,16 +87,16 @@ public class Main {
 
             System.out.println("  Methods:");
             for (String m : c.methods.keySet()) {
-                MethData mi = c.methods.get(m);
-
-                System.out.print("    " + mi.returnType + " " + m + "(");
-                for (int i = 0; i < mi.paramTypes.size(); i++) {
-                    System.out.print(mi.paramTypes.get(i) + " " + mi.paramNames.get(i));
-                    if (i < mi.paramTypes.size() - 1) System.out.print(", ");
+                List<MethData> lm = c.methods.get(m);
+                for(MethData mi : lm) {
+                    System.out.print("    " + mi.returnType + " " + m + "(");
+                    for (int i = 0; i < mi.paramTypes.size(); i++) {
+                        System.out.print(mi.paramTypes.get(i) + " " + mi.paramNames.get(i));
+                        if (i < mi.paramTypes.size() - 1) System.out.print(", ");
+                    }
+                    System.out.println(")");
                 }
-                System.out.println(")");
             }
-
             System.out.println();
         }
     }

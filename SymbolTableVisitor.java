@@ -14,6 +14,23 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     private int currentMethodOffset = 0;
 
     /**
+    * int = 4 bytes
+    * boolean = 1 byte
+    * pointers (int[], custom objects) = 8 bytes
+    */
+    public int getTypeSize(String type) {
+        if ("int".equals(type)) {
+            return 4;
+        }
+        else if ("boolean".equals(type)) {
+            return 1;
+        }
+        else {
+            return 8;
+        }
+    }
+
+    /**
      * Helper method
      * initializes offsets for the current class
      * If the class extends a parent, it inherits the parent's next available offsets
@@ -74,8 +91,11 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         currentClass = new ClassData(classname);
         symbolTable.classes.put(classname, currentClass);
 
+        initializeOffsets(currentClass);
+
         super.visit(n, argu);
 
+        finalizeOffsets();
         System.out.println();
 
         return null;
@@ -99,6 +119,9 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         currentClass = new ClassData(classname);
         symbolTable.classes.put(classname, currentClass);
 
+        // Base class: no parent
+        initializeOffsets(currentClass);
+
         n.f2.accept(this, argu);
         System.out.println("Fields: ");
         n.f3.accept(this, argu);    // Visit all fields
@@ -106,6 +129,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         n.f4.accept(this, argu);    // Visit all methods
         n.f5.accept(this, argu);
 
+        finalizeOffsets();
         System.out.println();
         currentClass = null;
 
@@ -138,6 +162,9 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
 
         symbolTable.classes.put(classname, currentClass);
 
+        // Derived class: will inherit offsets
+        initializeOffsets(currentClass);
+
         n.f4.accept(this, argu);
         System.out.println("Fields: ");
         n.f5.accept(this, argu);
@@ -145,6 +172,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
 
+        finalizeOffsets();
         System.out.println();
 
         return null;
@@ -170,10 +198,12 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
             // inside class: fields
             // check if we have seen this field before
             currentClass.addField(varname, type);
+            // update offset
+            currentFieldOffset += getTypeSize(type);
+            currentClass.FieldOffsets.put(currentFieldOffset, varname);
         }
 
-        super.visit(n, argu);   //?
-        
+        super.visit(n, argu);
         return _ret;
     }
 
@@ -196,12 +226,10 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     public String visit(MethodDeclaration n, Void argu) throws Exception {
         // f4.present() checks if it exists (parameters for the method)
         String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
-        System.err.println("THE PARAMS " + paramsList);
         String returnType = n.f1.accept(this, null);
         String methodName = n.f2.accept(this, null);
 
         currentMethod = new MethData(methodName, returnType);
-        System.err.println("THE PARAMS " + currentMethod.paramNames);
         // see if it is method overloading
         boolean overload = false;
         if (symbolTable.validateOverload(currentClass, currentMethod)) overload = true;
@@ -209,6 +237,13 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         // if none of them have poped an exception, it is a valid method (in terms of either overloading or overriding)
         // so we can add it
         currentClass.addMethod(currentMethod, overload);
+
+        // Methods take up 8 bytes in the vtable
+        System.out.println("  Method: " + methodName + " : offset " + currentMethodOffset);
+        if (currentMethod.overrideBit == false) {
+            currentMethodOffset += 8;
+            currentClass.MethodOffsets.put(currentFieldOffset, methodName);
+        }
         
         System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");
