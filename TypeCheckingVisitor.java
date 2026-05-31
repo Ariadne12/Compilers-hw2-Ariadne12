@@ -194,43 +194,59 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return type + " " + name;
     }
 
-    // allocation
-    // Finally, the assignment A a = new B(); when B extends A is correct, 
-    // and the same applies when a method expects a parameter of type A and a B instance is given instead
+    // expressions
     @Override
-    public String visit(AllocationExpression n, Void argu) throws Exception{
-        String varName = n.f0.accept(this, null);
-        String varType = symbolTable.findVar(varName, currentMethod, currentClass);
-        String exprType = n.f2.accept(this, null);
+    public String visit(Expression n, Void argu) throws Exception {
+        return n.f0.accept(this, null);
+    }
 
-        if (!symbolTable.isSubtype(exprType, varType)) {
-            throw new RuntimeException(
-                "Incompatible types in assignment");
-        }
+    @Override
+    public String visit(PrimaryExpression n, Void argu) throws Exception {
+        return n.f0.accept(this, null);
+    }
 
-        return null;
+    // parentheses don't change type, so we keep as is
+    @Override
+    public String visit(BracketExpression n, Void argu) throws Exception {
+        return n.f1.accept(this, null);
+    }
+
+    // this
+    @Override
+    public String visit(ThisExpression n, Void argu) {
+        return currentClass.name;
+    }
+
+    // allocation
+    @Override
+    public String visit(AllocationExpression n, Void argu) throws Exception {
+        String className = n.f1.accept(this, null);
+
+        if (!symbolTable.classes.containsKey(className))
+            throw new Exception(
+                "Unknown class " + className);
+
+        return className;
+    }
+
+    @Override
+    public String visit(ArrayAllocationExpression n, Void argu) throws Exception {
+        String sizeType = n.f3.accept(this, null);
+
+        if (!sizeType.equals("int"))
+            throw new Exception(
+                "Array size must be int");
+
+        return "int[]";
     }
 
     // assignment
+    // Finally, the assignment A a = new B(); when B extends A is correct, 
+    // and the same applies when a method expects a parameter of type A and a B instance is given instead
     @Override
     public String visit(AssignmentStatement n, Void argu) throws Exception{
         String varName = n.f0.accept(this, null);
         String varType = symbolTable.findVar(varName, currentMethod, currentClass);
-        String exprType = n.f2.accept(this, null);
-
-        if (!symbolTable.isSubtype(exprType, varType)) {
-            throw new RuntimeException(
-                "Incompatible types in assignment");
-        }
-
-        return null;
-    }
-
-    @Override
-    public String visit(ArrayAssignmentStatement n, Void argu) throws Exception{
-        String varName = n.f0.accept(this, null);
-        String varType = symbolTable.findVar(varName, currentMethod, currentClass);
-        
         String exprType = n.f2.accept(this, null);
 
         if (!symbolTable.isSubtype(exprType, varType)) {
@@ -310,11 +326,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
     // types
     @Override
-    public String visit(ArrayAllocationExpression n, Void argu) {
-        return "int[]";
-    }
-
-    @Override
     public String visit(TrueLiteral n, Void argu) {
         return "boolean";
     }
@@ -329,9 +340,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int";
     }
 
-    /**
-    * f0 -> <IDENTIFIER>
-    */
+    // just return the name
     @Override
     public String visit(Identifier n, Void argu) {
         return n.f0.toString();
