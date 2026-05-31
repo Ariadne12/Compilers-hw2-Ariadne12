@@ -12,6 +12,11 @@ public class ClassData {
     // a certain name can return more than one methods (overloading)
     public LinkedHashMap<String, List<MethData>> methods = new LinkedHashMap<>();
 
+    int finalFieldOffset;
+    int finalMethodOffset;
+    public Map<Integer, String> FieldOffsets = new HashMap<>();
+    public Map<Integer, String> MethodOffsets = new HashMap<>();
+
     public ClassData(String name) {
         this.name = name;
         this.parent = null;

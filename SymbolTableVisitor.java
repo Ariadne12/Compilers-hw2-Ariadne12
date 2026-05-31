@@ -8,6 +8,44 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
 
     private ClassData currentClass = null;
     private MethData currentMethod = null;
+
+    // may keep
+    private int currentFieldOffset = 0;
+    private int currentMethodOffset = 0;
+
+    /**
+     * Helper method
+     * initializes offsets for the current class
+     * If the class extends a parent, it inherits the parent's next available offsets
+     */
+    private void initializeOffsets(ClassData currentClass) {
+        // find ancestors of class with same method. so see if override
+        String parentName = currentClass.parent;
+        if (parentName != null) {
+            // Start where the parent left off
+            ClassData parentClass = symbolTable.classes.get(parentName);
+            currentFieldOffset = parentClass.finalFieldOffset;
+            currentMethodOffset = parentClass.finalMethodOffset;
+        } 
+        else {
+            // Base class starts at 0
+            currentFieldOffset = 0;
+            currentMethodOffset = 0;
+        }
+    }
+
+    /**
+     * Helper method
+     * saves the final offsets when we finish visiting a class
+     */
+    private void finalizeOffsets() {
+        if (currentClass != null) {
+            currentClass.finalFieldOffset = currentFieldOffset;
+            currentClass.finalMethodOffset = currentMethodOffset;
+        }
+        currentClass = null;
+    }
+
     /**
      * f0 -> "class"
      * f1 -> Identifier()
@@ -158,11 +196,12 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     public String visit(MethodDeclaration n, Void argu) throws Exception {
         // f4.present() checks if it exists (parameters for the method)
         String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
-        
+        System.err.println("THE PARAMS " + paramsList);
         String returnType = n.f1.accept(this, null);
         String methodName = n.f2.accept(this, null);
 
         currentMethod = new MethData(methodName, returnType);
+        System.err.println("THE PARAMS " + currentMethod.paramNames);
         // see if it is method overloading
         boolean overload = false;
         if (symbolTable.validateOverload(currentClass, currentMethod)) overload = true;
@@ -229,6 +268,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         if (currentMethod != null) {
             // check if we have seen this parameter before in this method
             currentMethod.addParam(name, type);
+            System.err.println("umm are we adding?" + name + " " + type);
         }
         return type + " " + name;
     }
