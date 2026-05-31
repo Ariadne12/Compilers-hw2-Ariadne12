@@ -106,7 +106,8 @@ public class SymbolTable {
     public void validateOverride(ClassData currentClass, MethData currentMethod) throws Exception {
         if (currentClass.parent == null) return;
         ClassData ancestor = classes.get(currentClass.parent);
-        while (ancestor != null) {
+        while (ancestor.name != null) {
+            System.err.println("ancestor " + ancestor.name);
             List<MethData> sameNameMethods = ancestor.methods.get(currentMethod.name);
             if (sameNameMethods != null) {
                 for (MethData ancestorMethod : sameNameMethods) {
@@ -122,6 +123,8 @@ public class SymbolTable {
                             );
                         }
                         // valid override
+                        currentMethod.overrideBit = true;
+                        System.err.println("VALID OVERRIDE");
                         return;
                     }
                 }

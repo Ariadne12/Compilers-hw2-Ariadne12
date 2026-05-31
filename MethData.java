@@ -3,7 +3,6 @@ import java.util.*;
 public class MethData {
     public String name;
 
-
     public ArrayList<String> paramTypes = new ArrayList<String>();
     public ArrayList<String> paramNames = new ArrayList<String>();
     
