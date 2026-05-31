@@ -277,21 +277,21 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
         if(!arrType.equals("int[]"))
             throw new Exception(
-                arrName + " is not an int[]"
+                arrName + " is not an int[]. Found" + arrType
             );
 
         String indexType = n.f2.accept(this, null);
 
         if(!indexType.equals("int"))
             throw new Exception(
-                "Array index must be int"
+                "Array index must be int. Found " + indexType
             );
 
         String assignedValueType = n.f5.accept(this, null);
 
         if(!assignedValueType.equals("int"))
             throw new Exception(
-                "Array element must be int"
+                "Array element must be int. Found " + assignedValueType
             );
 
         return null;
@@ -304,7 +304,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
         if (!condType.equals("boolean"))
             throw new Exception(
-                "If condition must be boolean"
+                "If condition must be boolean. Found " + condType
             );
 
         n.f4.accept(this, null);
@@ -320,7 +320,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
         if (!condType.equals("boolean"))
             throw new Exception(
-                "While condition must be boolean"
+                "While condition must be boolean. Found " + condType
             );
 
         n.f4.accept(this, null);
@@ -335,10 +335,42 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
         if (!exprType.equals("int"))
             throw new Exception(
-                "println expects int"
+                "println expects int. Found " + exprType
             );
 
         return null;
+    }
+
+    // array details
+    @Override
+    public String visit(ArrayLookup n, Void argu) throws Exception {
+        String arrayType = n.f0.accept(this, null);
+
+        if(!arrayType.equals("int[]"))
+            throw new Exception(
+                "Array lookup on non-array type. Found " + arrayType
+            );
+
+        String indexType = n.f2.accept(this, null);
+
+        if(!indexType.equals("int"))
+            throw new Exception(
+                "Array index must be int. Found " + indexType
+            );
+
+        return "int";
+    }
+
+    @Override
+    public String visit(ArrayLength n, Void argu) throws Exception {
+        String arrayType = n.f0.accept(this, null);
+
+        if(!arrayType.equals("int[]"))
+            throw new Exception(
+                ".length applied to non-array. Found" + arrayType
+            );
+
+        return "int";
     }
 
     // arithmetic operations
