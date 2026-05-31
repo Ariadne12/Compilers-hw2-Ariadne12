@@ -30,7 +30,7 @@ public class Main {
 
                 // debugging
                 System.out.println("debug mode");
-                debug_print(eval1);
+                print_offsets(eval1);
 
                 // New visitor creation
                 //TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable.classes);

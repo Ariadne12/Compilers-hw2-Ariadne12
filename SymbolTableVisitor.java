@@ -199,8 +199,8 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
             // check if we have seen this field before
             currentClass.addField(varname, type);
             // update offset
-            currentFieldOffset += getTypeSize(type);
             currentClass.FieldOffsets.put(currentFieldOffset, varname);
+            currentFieldOffset += getTypeSize(type);
         }
 
         super.visit(n, argu);
@@ -224,12 +224,14 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(MethodDeclaration n, Void argu) throws Exception {
-        // f4.present() checks if it exists (parameters for the method)
-        String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
         String returnType = n.f1.accept(this, null);
         String methodName = n.f2.accept(this, null);
 
         currentMethod = new MethData(methodName, returnType);
+
+        // f4.present() checks if it exists (parameters for the method)
+        String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
+
         // see if it is method overloading
         boolean overload = false;
         if (symbolTable.validateOverload(currentClass, currentMethod)) overload = true;
@@ -241,14 +243,15 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         // Methods take up 8 bytes in the vtable
         System.out.println("  Method: " + methodName + " : offset " + currentMethodOffset);
         if (currentMethod.overrideBit == false) {
+            currentClass.MethodOffsets.put(currentMethodOffset, methodName);
             currentMethodOffset += 8;
-            currentClass.MethodOffsets.put(currentFieldOffset, methodName);
         }
         
         System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");
 
-        super.visit(n, argu);   // Traverse inside method
+        n.f7.accept(this, argu); // local vars
+        n.f8.accept(this, argu); // statements
         currentMethod = null;
         return null;
     }
@@ -303,7 +306,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         if (currentMethod != null) {
             // check if we have seen this parameter before in this method
             currentMethod.addParam(name, type);
-            System.err.println("umm are we adding?" + name + " " + type);
         }
         return type + " " + name;
     }
