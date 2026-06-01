@@ -84,7 +84,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(MainClass n, Void argu) throws Exception {
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
 
         currentClass = new ClassData(classname);
         symbolTable.classes.put(classname, currentClass);
@@ -94,7 +93,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         super.visit(n, argu);
 
         finalizeOffsets();
-        System.out.println();
 
         return null;
     }
@@ -112,7 +110,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         n.f0.accept(this, argu);    // just visits token
         
         String classname = n.f1.accept(this, argu);     // get class name
-        System.out.println("Normal! Class: " + classname);
 
         currentClass = new ClassData(classname);
         symbolTable.classes.put(classname, currentClass);
@@ -121,14 +118,11 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         initializeOffsets(currentClass);
 
         n.f2.accept(this, argu);
-        System.out.println("Fields: ");
         n.f3.accept(this, argu);    // Visit all fields
-        System.out.println("Methods: ");
         n.f4.accept(this, argu);    // Visit all methods
         n.f5.accept(this, argu);
 
         finalizeOffsets();
-        System.out.println();
         currentClass = null;
 
         return null;
@@ -150,7 +144,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         n.f0.accept(this, argu);
 
         String classname = n.f1.accept(this, null);
-        System.out.println("Inherited! Class: " + classname);
 
         n.f2.accept(this, argu);
         String parentname = n.f3.accept(this, argu);    // f3, identifier is from parent class, since it is after f2:extends
@@ -164,14 +157,11 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         initializeOffsets(currentClass);
 
         n.f4.accept(this, argu);
-        System.out.println("Fields: ");
         n.f5.accept(this, argu);
-        System.out.println("Methods: ");
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
 
         finalizeOffsets();
-        System.out.println();
 
         return null;
     }
@@ -185,7 +175,6 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         String _ret=null;
         String type = n.f0.accept(this, argu);
         String varname = n.f1.accept(this, argu);
-        System.out.println(varname + " " + type);
 
         if (currentMethod != null) {
             // inside method: local variables
@@ -239,14 +228,10 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         currentClass.addMethod(currentMethod, overload);
 
         // Methods take up 8 bytes in the vtable
-        System.out.println("  Method: " + methodName + " : offset " + currentMethodOffset);
         if (currentMethod.overrideBit == false) {
             currentClass.MethodOffsets.put(currentMethodOffset, methodName);
             currentMethodOffset += 8;
         }
-        
-        System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
-        System.out.println("Local vars:");
 
         n.f7.accept(this, argu); // local vars
         n.f8.accept(this, argu); // statements

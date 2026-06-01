@@ -14,8 +14,8 @@ public class ClassData {
 
     int finalFieldOffset;
     int finalMethodOffset;
-    public Map<Integer, String> FieldOffsets = new HashMap<>();
-    public Map<Integer, String> MethodOffsets = new HashMap<>();
+    public TreeMap<Integer, String> FieldOffsets = new TreeMap<>();
+    public TreeMap<Integer, String> MethodOffsets = new TreeMap<>();
 
     public ClassData(String name) {
         this.name = name;

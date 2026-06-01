@@ -16,6 +16,7 @@ public class Main {
         for (int i = 0; i < args.length; i++) {
             try {
                 fis = new FileInputStream(args[0]);
+                System.err.println("checking..." + args[0]);
                 MiniJavaParser parser = new MiniJavaParser(fis);
 
                 // Begins with syntax tree's root
@@ -25,15 +26,14 @@ public class Main {
                 SymbolTableVisitor eval1 = new SymbolTableVisitor();
                 root.accept(eval1, null);
 
-                // debugging
-                System.out.println("debug mode");
+                System.err.println("done with storing");
                 print_offsets(eval1);
 
                 // New visitor creation
-                System.err.println("ayo");
+                System.err.println("Now doing type check");
                 TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable);
                 root.accept(eval2, null);
-                System.err.println("programm has been accepted!!!!");
+                System.err.println("Accepted!!!!");
             }
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
@@ -61,7 +61,6 @@ public class Main {
             for (Integer off : c.FieldOffsets.keySet()) {
                 System.out.println(className + "." + c.FieldOffsets.get(off) + " : " + off);
             }
-            System.out.println("  Methods:");
             for (Integer off : c.MethodOffsets.keySet()) {
                 System.out.println(className + "." + c.MethodOffsets.get(off) + " : " + off);
             }
