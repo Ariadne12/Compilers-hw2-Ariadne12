@@ -46,18 +46,14 @@ public class MethData {
 
     // true -> same name, same types on all parameters
     public boolean compareMethods(MethData other) {
-        System.err.println("current " + this.name + "comapreing to " + other.name);
         if (!name.equals(other.name))
             return false;
-        System.err.println("current size " + this.paramTypes.size() + "comapreing to " + other.paramTypes.size());
         if (paramTypes.size() != other.paramTypes.size())
             return false;
-        System.err.println("are you following");
         for (int i = 0; i < paramTypes.size(); i++) {
             if (!paramTypes.get(i).equals(other.paramTypes.get(i)))
                 return false;
         }
-        System.err.println("true");
         return true;
     }
 }

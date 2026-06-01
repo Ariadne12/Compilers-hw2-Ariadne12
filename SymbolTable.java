@@ -87,7 +87,6 @@ public class SymbolTable {
         if(currentClass.methods.containsKey(name)) {     // same name
             List<MethData> lm = currentClass.methods.get(name);
             for(MethData m : lm) {      // need to check for all methods with same name
-                System.err.println("methname" + m.name);
                 if(currentMethod.compareMethods(m)){
                     throw new Exception(
                         "Method " + name +
@@ -107,7 +106,6 @@ public class SymbolTable {
         if (currentClass.parent == null) return;
         ClassData ancestor = classes.get(currentClass.parent);
         while (ancestor.name != null) {
-            System.err.println("ancestor " + ancestor.name);
             List<MethData> sameNameMethods = ancestor.methods.get(currentMethod.name);
             if (sameNameMethods != null) {
                 for (MethData ancestorMethod : sameNameMethods) {

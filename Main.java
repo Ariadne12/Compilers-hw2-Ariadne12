@@ -20,7 +20,7 @@ public class Main {
 
                 // Begins with syntax tree's root
                 Goal root = parser.Goal();
-                
+
                 // New visitor creation
                 SymbolTableVisitor eval1 = new SymbolTableVisitor();
                 root.accept(eval1, null);
@@ -30,8 +30,10 @@ public class Main {
                 print_offsets(eval1);
 
                 // New visitor creation
-                //TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable);
-                //root.accept(eval2, null);
+                System.err.println("ayo");
+                TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable);
+                root.accept(eval2, null);
+                System.err.println("programm has been accepted!!!!");
             }
             catch(ParseException ex){
                 System.out.println(ex.getMessage());

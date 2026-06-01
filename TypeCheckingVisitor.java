@@ -37,12 +37,10 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(MainClass n, Void argu) throws Exception {
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
 
         currentClass = symbolTable.findClass(classname);
         super.visit(n, argu);
 
-        System.out.println();
         currentClass = null;
 
         return null;
@@ -59,16 +57,12 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(ClassDeclaration n, Void argu) throws Exception {
         String classname = n.f1.accept(this, argu);
-        System.out.println("Class: " + classname);
 
         currentClass = symbolTable.findClass(classname);
         System.err.println(currentClass.fields);
-        System.out.println("Fields: ");
         n.f3.accept(this, argu);
-        System.out.println("Methods: ");
         n.f4.accept(this, argu);
 
-        System.out.println();
         currentClass = null;
         return null;
     }
@@ -88,20 +82,16 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         n.f0.accept(this, argu);
 
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
 
         currentClass = symbolTable.findClass(classname);
 
         n.f2.accept(this, argu);
         n.f3.accept(this, argu);
         n.f4.accept(this, argu);
-        System.out.println("Fields: ");
         n.f5.accept(this, argu);
-        System.out.println("Methods: ");
         n.f6.accept(this, argu);
         n.f7.accept(this, argu);
 
-        System.out.println();
         currentClass = null;
         return null;
     }
@@ -113,8 +103,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     */
    public String visit(VarDeclaration n, Void argu) throws Exception {
         String type = n.f0.accept(this, argu);
-        String var = n.f1.accept(this, argu);
-        System.err.println("passing from var decls" + var);
         super.visit(n, argu);
         
         return type;
@@ -141,18 +129,14 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         String methodName = n.f2.accept(this, null);
         currentMethod = new MethData(methodName, returnType);
 
-        String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
-
-        System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
-        System.out.println("Local vars:");
-
+        n.f4.accept(this, null);
         currentMethod = symbolTable.findMethod(currentMethod, currentClass);
 
         n.f7.accept(this, argu); // local vars
         n.f8.accept(this, argu); // statements
 
         String retExprType = n.f10.accept(this, argu);
-        // need to check if what is returned is actually compatible with what the method says it will
+        // need to check if what is returned is actually compatible with what the method says it will return
         if (!returnType.equals(retExprType)) {
             throw new Exception(
                 retExprType + " not compatible with return type " + returnType + " of " + methodName
@@ -162,8 +146,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         currentMethod = null;
         return null;
     }
-
-    //visit(Statement n, Void argu)
 
     //visit(Block n, Void argu)
 
