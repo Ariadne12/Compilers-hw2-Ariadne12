@@ -59,7 +59,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, argu);
 
         currentClass = symbolTable.findClass(classname);
-        System.err.println(currentClass.fields);
         n.f3.accept(this, argu);
         n.f4.accept(this, argu);
 
@@ -147,7 +146,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return null;
     }
 
-    //visit(Block n, Void argu)
+    @Override
+    public String visit(Block n, Void argu) throws Exception {
+        n.f1.accept(this, argu);    // visit the statement list inside { }
+        return null;
+    }
 
     // MessageSend
     /**
@@ -178,16 +181,16 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         if (n.f4.present()) {
             // ExpressionList returns "type1,type2,..." so we will need to divide them manually
             String paramString = n.f4.accept(this, null);
-            if (!paramString.equals("")){       // temp sol
+            if (paramString != null && !paramString.isEmpty()) {
                 for (String t : paramString.split(",")) {
-                    // again keeping the name of the parameters null since they do not matter in this instance
-                    messageMethod.addParam(null, t.trim());
+                    String trimmed = t.trim();
+                    if (!trimmed.isEmpty())
+                        messageMethod.paramTypes.add(trimmed);
                 }
             }
         }
 
-        MethData found = symbolTable.findMethod(messageMethod, currentClass);
-
+        MethData found = symbolTable.findMethod(messageMethod, receiverClass);
         if (found == null)
             throw new Exception(
                 "No matching method " + messageMethodName +
@@ -429,9 +432,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(AssignmentStatement n, Void argu) throws Exception{
         String varName = n.f0.accept(this, null);
-        System.err.println("meth" + currentMethod.name);
         String varType = symbolTable.findVar(varName, currentMethod, currentClass);
-        System.err.println("left: " + varType);
         // not sure
         if (varType == null)
             throw new Exception(
@@ -439,10 +440,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
             );
 
         String exprType = n.f2.accept(this, null);
-        System.err.println("right: " + exprType);
         if (!symbolTable.isSubtype(exprType, varType)) {
-            throw new RuntimeException(
-                "Incompatible types in assignment");
+            throw new Exception(
+                "Incompatible types in assignment: " + varName + 
+                " " + varType + 
+                " cannot be converted into " + exprType);
         }
 
         return null;
@@ -523,7 +525,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     public String visit(PlusExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
         String right = n.f2.accept(this, null);
-        System.err.println("so um left operand: " + left + " and right op: " + right);
 
         if (!left.equals("int") || !right.equals("int")) {
             throw new RuntimeException("Bad operand types for binary operator '+'. Must be between integers");
