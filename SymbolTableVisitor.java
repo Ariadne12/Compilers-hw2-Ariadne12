@@ -229,8 +229,7 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
 
         currentMethod = new MethData(methodName, returnType);
 
-        // f4.present() checks if it exists (parameters for the method)
-        String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
+        n.f4.accept(this, null);
 
         // see if it is method overloading
         boolean overload = false;

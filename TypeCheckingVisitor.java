@@ -377,6 +377,15 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return n.f0.accept(this, null);
     }
 
+    /**
+     * f0 -> "if"
+     * f1 -> "("
+     * f2 -> Expression()
+     * f3 -> ")"
+     * f4 -> Statement()
+     * f5 -> "else"
+     * f6 -> Statement()
+     */
     @Override
     public String visit(IfStatement n, Void argu) throws Exception {
         String condType = n.f2.accept(this, null);
@@ -483,7 +492,12 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // array details
-    // need to put index in limmits
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "["
+    * f2 -> PrimaryExpression()
+    * f3 -> "]"
+    */
     @Override
     public String visit(ArrayLookup n, Void argu) throws Exception {
         String arrayType = n.f0.accept(this, null);
@@ -503,6 +517,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int";
     }
 
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "."
+     * f2 -> "length"
+     */
     @Override
     public String visit(ArrayLength n, Void argu) throws Exception {
         String arrayType = n.f0.accept(this, null);
@@ -532,6 +551,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int";
     }
 
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "-"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(MinusExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
@@ -543,6 +567,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int";
     }
 
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "*"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(TimesExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
@@ -554,6 +583,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "int";
     }
 
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "<"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(CompareExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
@@ -566,6 +600,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // logic operations
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "&&"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(AndExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
@@ -577,6 +616,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return "boolean";
     }
 
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "!"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(NotExpression n, Void argu) throws Exception{
         String primExpr = n.f1.accept(this, null);
