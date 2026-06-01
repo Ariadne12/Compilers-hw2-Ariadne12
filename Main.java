@@ -29,7 +29,7 @@ public class Main {
                 TypeCheckingVisitor eval2 = new TypeCheckingVisitor(eval1.symbolTable);
                 root.accept(eval2, null);
 
-                print_offsets(eval1);
+                //print_offsets(eval1);
             }
             catch(ParseException ex){
                 System.out.println(ex.getMessage());
