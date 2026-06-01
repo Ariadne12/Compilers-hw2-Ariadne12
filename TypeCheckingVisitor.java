@@ -180,6 +180,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         List<String> paramTypes = new ArrayList<>();
         if (n.f4.present()) {
             // ExpressionList returns "type1,type2,..." so we will need to divide them manually
+            // or maybe just do a visit on f4 lmao. we'll test it
             String paramString = n.f4.accept(this, null);
             for (String t : paramString.split(",")) {
                 // again keeping the name of the parameters null since they do not matter in this instance
@@ -212,9 +213,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ExpressionList n, Void argu) throws Exception {
-        String firstType = n.f0.accept(this, null);
-        String rest = n.f1.accept(this, null);   // ExpressionTail returns ",type,type..."
-        return firstType + rest;
+        String ret = n.f0.accept(this, null);
+        if (n.f1 != null) {
+            ret += n.f1.accept(this, null);   // ExpressionTail returns ",type,type..."
+        }
+            return ret;
     }
 
      /**
@@ -224,8 +227,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ExpressionTerm n, Void argu) throws Exception {
-        String type = n.f1.accept(this, null);
-        return "," + type;
+        return n.f1.accept(this, argu);
     }
 
     // zero or more additional arguments
@@ -234,11 +236,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ExpressionTail n, Void argu) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        for (Node node : n.f0.nodes) {
-            sb.append(node.accept(this, null));  // each ExpressionTerm is before a ","
+        String ret = "";
+        for ( Node node: n.f0.nodes) {
+            ret += ", " + node.accept(this, null);  // each ExpressionTerm is before a ","
         }
-        return sb.toString();
+        return ret;
     }
         
     @Override
@@ -287,6 +289,53 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // statements
+    @Override
+    public String visit(Statement n, Void argu) throws Exception {
+        return n.f0.accept(this, null);
+    }
+
+    @Override
+    public String visit(IfStatement n, Void argu) throws Exception {
+        String condType = n.f2.accept(this, null);
+
+        if (!condType.equals("boolean"))
+            throw new Exception(
+                "If condition must be boolean. Found " + condType
+            );
+
+        n.f4.accept(this, null);
+        n.f6.accept(this, null);
+
+        return null;
+    }
+
+    // same limitations
+    @Override
+    public String visit(WhileStatement n, Void argu) throws Exception {
+        String condType = n.f2.accept(this, null);
+
+        if (!condType.equals("boolean"))
+            throw new Exception(
+                "While condition must be boolean. Found " + condType
+            );
+
+        n.f4.accept(this, null);
+
+        return null;
+    }
+
+    // minijava accepts only int in prints
+    @Override
+    public String visit(PrintStatement n, Void argu) throws Exception {
+        String exprType = n.f2.accept(this, null);
+
+        if (!exprType.equals("int"))
+            throw new Exception(
+                "println expects int. Found " + exprType
+            );
+
+        return null;
+    }
 
     // assignment
     // Finally, the assignment A a = new B(); when B extends A is correct, 
@@ -339,50 +388,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         if(!assignedValueType.equals("int"))
             throw new Exception(
                 "Array element must be int. Found " + assignedValueType
-            );
-
-        return null;
-    }
-
-    // statements
-    @Override
-    public String visit(IfStatement n, Void argu) throws Exception {
-        String condType = n.f2.accept(this, null);
-
-        if (!condType.equals("boolean"))
-            throw new Exception(
-                "If condition must be boolean. Found " + condType
-            );
-
-        n.f4.accept(this, null);
-        n.f6.accept(this, null);
-
-        return null;
-    }
-
-    // same limitations
-    @Override
-    public String visit(WhileStatement n, Void argu) throws Exception {
-        String condType = n.f2.accept(this, null);
-
-        if (!condType.equals("boolean"))
-            throw new Exception(
-                "While condition must be boolean. Found " + condType
-            );
-
-        n.f4.accept(this, null);
-
-        return null;
-    }
-
-    // minijava accepts only int in prints
-    @Override
-    public String visit(PrintStatement n, Void argu) throws Exception {
-        String exprType = n.f2.accept(this, null);
-
-        if (!exprType.equals("int"))
-            throw new Exception(
-                "println expects int. Found " + exprType
             );
 
         return null;
