@@ -62,7 +62,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         System.out.println("Class: " + classname);
 
         currentClass = symbolTable.findClass(classname);
-
+        System.err.println(currentClass.fields);
         System.out.println("Fields: ");
         n.f3.accept(this, argu);
         System.out.println("Methods: ");
@@ -112,13 +112,12 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     * f2 -> ";"
     */
    public String visit(VarDeclaration n, Void argu) throws Exception {
-        String _ret=null;
         String type = n.f0.accept(this, argu);
         String var = n.f1.accept(this, argu);
-        System.out.println(var + " " + type);
+        System.err.println("passing from var decls" + var);
         super.visit(n, argu);
         
-        return _ret;
+        return type;
     }
 
     /**
@@ -142,19 +141,24 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         String methodName = n.f2.accept(this, null);
         currentMethod = new MethData(methodName, returnType);
 
-        String paramString = "";
-        if (n.f4.present()) {
-            paramString = n.f4.accept(this, null);
-            for (String t : paramString.split(",")) {
-                currentMethod.addParam(null, t.trim());
-            }
-        }
+        String paramsList = n.f4.present() ? n.f4.accept(this, null) : "";
 
-        System.out.println("Method: " + returnType + " " + methodName + " (" + paramString + ")");
+        System.out.println("Method: " + returnType + " " + methodName + " (" + paramsList + ")");
         System.out.println("Local vars:");
+
+        currentMethod = symbolTable.findMethod(currentMethod, currentClass);
 
         n.f7.accept(this, argu); // local vars
         n.f8.accept(this, argu); // statements
+
+        String retExprType = n.f10.accept(this, argu);
+        // need to check if what is returned is actually compatible with what the method says it will
+        if (!returnType.equals(retExprType)) {
+            throw new Exception(
+                retExprType + " not compatible with return type " + returnType + " of " + methodName
+            );
+        }
+
         currentMethod = null;
         return null;
     }
@@ -165,7 +169,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
     // MessageSend
     /**
-     * Grammar production:
      * f0 -> PrimaryExpression()
      * f1 -> "."
      * f2 -> Identifier()
@@ -193,9 +196,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         if (n.f4.present()) {
             // ExpressionList returns "type1,type2,..." so we will need to divide them manually
             String paramString = n.f4.accept(this, null);
-            for (String t : paramString.split(",")) {
-                // again keeping the name of the parameters null since they do not matter in this instance
-                messageMethod.addParam(null, t.trim());
+            if (!paramString.equals("")){       // temp sol
+                for (String t : paramString.split(",")) {
+                    // again keeping the name of the parameters null since they do not matter in this instance
+                    messageMethod.addParam(null, t.trim());
+                }
             }
         }
 
@@ -206,11 +211,64 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
                 "No matching method " + messageMethodName +
                 " found in class " + receiverType +
                 " (or any inherited parent classes of " + receiverType + 
-                ") for argument types " + paramTypes
+                ") for argument types " + messageMethod.paramTypes
             );
 
         // Return the method's return type to know what to expect
         return found.returnType;
+    }
+    
+    // parameters
+    /**
+     * f0 -> FormalParameter()
+     * f1 -> FormalParameterTail()
+     */
+    @Override
+    public String visit(FormalParameterList n, Void argu) throws Exception {
+        String ret = n.f0.accept(this, null);
+
+        if (n.f1 != null) {
+            ret += n.f1.accept(this, null);
+        }
+
+        return ret;
+    }
+
+    /**
+    * f0 -> ","
+    * f1 -> FormalParameter()
+    */
+    public String visit(FormalParameterTerm n, Void argu) throws Exception {
+        return n.f1.accept(this, argu);
+    }
+
+    /**
+    * f0 -> ( FormalParameterTerm() )*
+    */
+    @Override
+    public String visit(FormalParameterTail n, Void argu) throws Exception {
+        String ret = "";
+        for (syntaxtree.Node node: n.f0.nodes) {
+            ret += ", " + node.accept(this, null);
+        }
+
+        return ret;
+    }
+
+    /**
+     * f0 -> Type()
+     * f1 -> Identifier()
+     */
+    @Override
+    public String visit(FormalParameter n, Void argu) throws Exception{
+        String type = n.f0.accept(this, null);
+        String name = n.f1.accept(this, null);
+
+        if (currentMethod != null) {
+            // check if we have seen this parameter before in this method
+            currentMethod.addParam(name, type);
+        }
+        return type + " " + name;
     }
 
     // expressions
@@ -232,7 +290,6 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
      /**
-     * Grammar production:
      * f0 -> ","
      * f1 -> Expression()
      */
@@ -253,15 +310,44 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         }
         return ret;
     }
-        
+    
+    /**
+     * f0 -> AndExpression()
+     *       | CompareExpression()
+     *       | PlusExpression()
+     *       | MinusExpression()
+     *       | TimesExpression()
+     *       | ArrayLookup()
+     *       | ArrayLength()
+     *       | MessageSend()
+     *       | PrimaryExpression()
+     */
     @Override
     public String visit(Expression n, Void argu) throws Exception {
         return n.f0.accept(this, null);
     }
 
     // returns type
+    /**
+     * f0 -> IntegerLiteral()
+     *       | TrueLiteral()
+     *       | FalseLiteral()
+     *       | Identifier()
+     *       | ThisExpression()
+     *       | ArrayAllocationExpression()
+     *       | AllocationExpression()
+     *       | NotExpression()
+     *       | BracketExpression()
+     */
     @Override
     public String visit(PrimaryExpression n, Void argu) throws Exception {
+        if (n.f0.choice instanceof Identifier) {
+            String name = ((Identifier) n.f0.choice).f0.toString();
+            String type = symbolTable.findVar(name, currentMethod, currentClass);
+            if (type == null)
+                throw new Exception("Undeclared variable: " + name);
+            return type;
+        }
         return n.f0.accept(this, null);
     }
 
@@ -352,11 +438,18 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     // assignment
     // Finally, the assignment A a = new B(); when B extends A is correct, 
     // and the same applies when a method expects a parameter of type A and a B instance is given instead
+    /**
+     * f0 -> Identifier()
+     * f1 -> "="
+     * f2 -> Expression()
+     * f3 -> ";"
+     */
     @Override
     public String visit(AssignmentStatement n, Void argu) throws Exception{
         String varName = n.f0.accept(this, null);
+        System.err.println("meth" + currentMethod.name);
         String varType = symbolTable.findVar(varName, currentMethod, currentClass);
-        
+        System.err.println("left: " + varType);
         // not sure
         if (varType == null)
             throw new Exception(
@@ -364,7 +457,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
             );
 
         String exprType = n.f2.accept(this, null);
-
+        System.err.println("right: " + exprType);
         if (!symbolTable.isSubtype(exprType, varType)) {
             throw new RuntimeException(
                 "Incompatible types in assignment");
@@ -406,6 +499,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // array details
+    // need to put index in limmits
     @Override
     public String visit(ArrayLookup n, Void argu) throws Exception {
         String arrayType = n.f0.accept(this, null);
@@ -438,10 +532,16 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // arithmetic operations
+    /**
+     * f0 -> PrimaryExpression()
+     * f1 -> "+"
+     * f2 -> PrimaryExpression()
+     */
     @Override
     public String visit(PlusExpression n, Void argu) throws Exception{
         String left = n.f0.accept(this, null);
         String right = n.f2.accept(this, null);
+        System.err.println("so um left operand: " + left + " and right op: " + right);
 
         if (!left.equals("int") || !right.equals("int")) {
             throw new RuntimeException("Bad operand types for binary operator '+'. Must be between integers");
@@ -505,6 +605,21 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     }
 
     // types
+    @Override
+    public String visit(ArrayType n, Void argu) {
+        return "int[]";
+    }
+
+    @Override
+    public String visit(BooleanType n, Void argu) {
+        return "boolean";
+    }
+
+    @Override
+    public String visit(IntegerType n, Void argu) {
+        return "int";
+    }
+
     @Override
     public String visit(TrueLiteral n, Void argu) {
         return "boolean";
