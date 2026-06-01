@@ -11,18 +11,18 @@ public class SymbolTable {
         return classes.get(className);
     }
 
-    // i think its wrong
-    public MethData findMethod(MethData currentMethod, ClassData currentClass) {
+    public MethData findMethod(MethData targetMethod, ClassData currentClass) {
         ClassData c = currentClass;
-        String methodName = currentMethod.name;
+        String methodName = targetMethod.name;
         while (c != null) {
             if (c.methods.containsKey(methodName)) {
                 List<MethData> lm = c.methods.get(methodName);
+                outer:
                 for(MethData m : lm) {
-                    if (m.paramTypes.size() != currentMethod.paramTypes.size()) break;
+                    if (m.paramTypes.size() != targetMethod.paramTypes.size()) continue;
                     for (int i = 0; i < m.paramTypes.size(); i++) {
-                        if (!m.paramTypes.get(i).equals(currentMethod.paramTypes.get(i))) {
-                            break;
+                        if (!m.paramTypes.get(i).equals(targetMethod.paramTypes.get(i))) {
+                            continue outer;
                         }
                     }
                     return m;
@@ -112,7 +112,7 @@ public class SymbolTable {
             if (sameNameMethods != null) {
                 for (MethData ancestorMethod : sameNameMethods) {
                     if (ancestorMethod.compareMethods(currentMethod)) {
-                        // override candidate found
+                        // found override candidate
                         if (!ancestorMethod.returnType.equals(currentMethod.returnType)) {
                             throw new Exception(
                                 "Invalid override of method "
@@ -124,7 +124,6 @@ public class SymbolTable {
                         }
                         // valid override
                         currentMethod.overrideBit = true;
-                        System.err.println("VALID OVERRIDE");
                         return;
                     }
                 }

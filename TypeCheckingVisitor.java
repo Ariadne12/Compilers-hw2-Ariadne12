@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.List;
+
 import syntaxtree.*;
 import visitor.*;
 
@@ -147,6 +150,57 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
 
     //visit(Block n, Void argu)
 
+    // MessageSend
+    /**
+     * Grammar production:
+     * f0 -> PrimaryExpression()
+     * f1 -> "."
+     * f2 -> Identifier()
+     * f3 -> "("
+     * f4 -> ( ExpressionList() )?
+     * f5 -> ")"
+     */
+    @Override
+    public String visit(MessageSend n, Void argu) throws Exception {
+        String receiverType = n.f0.accept(this, null);
+
+        // Receiver must be an already established class type
+        ClassData receiverClass = symbolTable.findClass(receiverType);
+        if (receiverClass == null)
+            throw new Exception(
+                "Non-class type: " + receiverType + " cannot be derefernced"
+            );
+
+        String messageMethodName = n.f2.accept(this, null);
+        // all info not necessary for our cause (like the return type of the method) 
+        // will be left null
+        MethData messageMethod = new MethData(messageMethodName, null);
+
+        // Collect the argument types (if any)
+        List<String> paramTypes = new ArrayList<>();
+        if (n.f4.present()) {
+            // ExpressionList returns "type1,type2,..." so we will need to divide them manually
+            String paramString = n.f4.accept(this, null);
+            for (String t : paramString.split(",")) {
+                // again keeping the name of the parameters null since they do not matter in this instance
+                currentMethod.addParam(null, t.trim());
+            }
+        }
+
+        MethData found = symbolTable.findMethod(messageMethod, currentClass);
+
+        if (found == null)
+            throw new Exception(
+                "No matching method " + messageMethodName +
+                " found in class " + receiverType +
+                " (or any inherited parent classes of " + receiverType + 
+                ") for argument types " + paramTypes
+            );
+
+        // Return the method's return type to know what to expect
+        return found.returnType;
+    }
+
     // expressions
     // they  must strictly return types correctly
     // collect argument types into a list
@@ -186,8 +240,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         }
         return sb.toString();
     }
-    
-    
+        
     @Override
     public String visit(Expression n, Void argu) throws Exception {
         return n.f0.accept(this, null);
