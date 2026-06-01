@@ -21,9 +21,9 @@ public class SymbolTable {
                 for(MethData m : lm) {
                     if (m.paramTypes.size() != targetMethod.paramTypes.size()) continue;
                     for (int i = 0; i < m.paramTypes.size(); i++) {
-                        if (!m.paramTypes.get(i).equals(targetMethod.paramTypes.get(i))) {
+                        // argument type must be subtype of parameter type
+                        if (!isSubtype(targetMethod.paramTypes.get(i), m.paramTypes.get(i)))
                             continue outer;
-                        }
                     }
                     return m;
                 }
