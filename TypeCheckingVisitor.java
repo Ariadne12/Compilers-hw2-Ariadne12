@@ -53,20 +53,18 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(ClassDeclaration n, Void argu) throws Exception {
-        n.f0.accept(this, argu);
-        
         String classname = n.f1.accept(this, argu);
         System.out.println("Class: " + classname);
 
-        n.f2.accept(this, argu);
+        currentClass = symbolTable.findClass(classname);
+
         System.out.println("Fields: ");
         n.f3.accept(this, argu);
         System.out.println("Methods: ");
         n.f4.accept(this, argu);
-        n.f5.accept(this, argu);
 
         System.out.println();
-
+        currentClass = null;
         return null;
     }
 
@@ -145,55 +143,51 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return null;
     }
 
-    /**
-     * f0 -> FormalParameter()
-     * f1 -> FormalParameterTail()
-     */
-    @Override
-    public String visit(FormalParameterList n, Void argu) throws Exception {
-        String ret = n.f0.accept(this, null);
+    //visit(Statement n, Void argu)
 
-        if (n.f1 != null) {
-            ret += n.f1.accept(this, null);
-        }
-
-        return ret;
-    }
-
-    /**
-    * f0 -> ","
-    * f1 -> FormalParameter()
-    */
-    public String visit(FormalParameterTerm n, Void argu) throws Exception {
-        return n.f1.accept(this, argu);
-    }
-
-    /**
-    * f0 -> ( FormalParameterTerm() )*
-    */
-    @Override
-    public String visit(FormalParameterTail n, Void argu) throws Exception {
-        String ret = "";
-        for ( Node node: n.f0.nodes) {
-            ret += ", " + node.accept(this, null);
-        }
-
-        return ret;
-    }
-
-    /**
-     * f0 -> Type()
-     * f1 -> Identifier()
-     */
-    @Override
-    public String visit(FormalParameter n, Void argu) throws Exception{
-        String type = n.f0.accept(this, null);
-        String name = n.f1.accept(this, null);
-        return type + " " + name;
-    }
+    //visit(Block n, Void argu)
 
     // expressions
     // they  must strictly return types correctly
+    // collect argument types into a list
+    // Returns a comma-separated string of types, e.g. "int,boolean,Foo"
+    /**
+     Similarly to parameters structure before we got:
+     * f0 -> Expression()
+     * f1 -> ExpressionTail()
+     */
+    @Override
+    public String visit(ExpressionList n, Void argu) throws Exception {
+        String firstType = n.f0.accept(this, null);
+        String rest = n.f1.accept(this, null);   // ExpressionTail returns ",type,type..."
+        return firstType + rest;
+    }
+
+     /**
+     * Grammar production:
+     * f0 -> ","
+     * f1 -> Expression()
+     */
+    @Override
+    public String visit(ExpressionTerm n, Void argu) throws Exception {
+        String type = n.f1.accept(this, null);
+        return "," + type;
+    }
+
+    // zero or more additional arguments
+    /**
+     * f0 -> ( ExpressionTerm() )*
+     */
+    @Override
+    public String visit(ExpressionTail n, Void argu) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        for (Node node : n.f0.nodes) {
+            sb.append(node.accept(this, null));  // each ExpressionTerm is before a ","
+        }
+        return sb.toString();
+    }
+    
+    
     @Override
     public String visit(Expression n, Void argu) throws Exception {
         return n.f0.accept(this, null);
@@ -415,7 +409,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         if (!left.equals("int") || !right.equals("int")) {
             throw new RuntimeException("Bad operand types for binary operator '<'. Must be between integers");
         }
-        return "int";
+        return "boolean";
     }
 
     // logic operations
