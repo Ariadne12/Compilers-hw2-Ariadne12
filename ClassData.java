@@ -32,8 +32,6 @@ public class ClassData {
         fields.put(name, type);
     }
 
-    // overloading: same name, 
-    // overriding: same name, same return type, same arguments typs for ALL
     public void addMethod(MethData currentMethod, boolean overload) throws Exception {
         // if it already exists
         if (overload) {

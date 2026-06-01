@@ -80,6 +80,25 @@ public class SymbolTable {
         return false;
     }
 
+    public boolean compareMethods(MethData currentMethod, MethData other, boolean subtypeCheck) {
+        if (!currentMethod.name.equals(other.name))
+            return false;
+        if (currentMethod.paramTypes.size() != other.paramTypes.size())
+            return false;
+        for (int i = 0; i < currentMethod.paramTypes.size(); i++) {
+            if (!currentMethod.paramTypes.get(i).equals(other.paramTypes.get(i))){
+                if (subtypeCheck == true) {
+                    // if it isnt sub or supertype either
+                    if ((this.isSubtype(other.paramTypes.get(i), currentMethod.paramTypes.get(i)) == false) &&
+                        (this.isSubtype(currentMethod.paramTypes.get(i), other.paramTypes.get(i)) == false)) 
+                        return false;
+                }
+                else return false;
+            }
+        }
+        return true;
+    }
+
     // if name + all parameter types are the same it's not overloading and it's illegal
     // same also counts for subtype-supertype pairs in parameter types
     public boolean validateOverload(ClassData currentClass, MethData currentMethod) throws Exception {
@@ -87,11 +106,12 @@ public class SymbolTable {
         if(currentClass.methods.containsKey(name)) {     // same name
             List<MethData> lm = currentClass.methods.get(name);
             for(MethData m : lm) {      // need to check for all methods with same name
-                if(currentMethod.compareMethods(m)){
+                if(compareMethods(currentMethod, m, true)){
+                //if(currentMethod.compareMethods(m)){
                     throw new Exception(
-                        "Method " + name +
+                        "Method " + name + "(" + currentMethod.getParameterString() + ")" +
                         " already defined in class " +
-                        currentClass.name
+                        currentClass.name + " (check for sub/supertypes)"
                     );
                 }
             }
@@ -110,7 +130,7 @@ public class SymbolTable {
             List<MethData> sameNameMethods = ancestor.methods.get(currentMethod.name);
             if (sameNameMethods != null) {
                 for (MethData ancestorMethod : sameNameMethods) {
-                    if (ancestorMethod.compareMethods(currentMethod)) {
+                    if (compareMethods(currentMethod, ancestorMethod, false)) {
                         // found override candidate
                         if (!ancestorMethod.returnType.equals(currentMethod.returnType)) {
                             throw new Exception(
