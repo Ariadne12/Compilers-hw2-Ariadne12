@@ -112,8 +112,14 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, argu);     // get class name
 
         currentClass = new ClassData(classname);
-        symbolTable.classes.put(classname, currentClass);
+        if (symbolTable.findClass(classname) == null)
+            symbolTable.classes.put(classname, currentClass);
+        else 
+            throw new Exception(
+                "Duplicate class: " + classname
+            );
 
+        
         // Base class: no parent
         initializeOffsets(currentClass);
 
@@ -179,7 +185,14 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         if (currentMethod != null) {
             // inside method: local variables
             // check if we have seen this variable before
-            currentMethod.addLocal(varname, type);
+            if (symbolTable.findVar(varname, currentMethod, currentClass) == null)
+                currentMethod.addLocal(varname, type);
+            else
+                throw new Exception(
+                    "Variable " + varname +
+                    " already defined in method " +
+                    currentMethod.name
+                );
         } 
         else if (currentClass != null) {
             // inside class: fields

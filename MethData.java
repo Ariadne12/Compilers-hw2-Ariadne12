@@ -21,12 +21,6 @@ public class MethData {
     }
 
     public void addLocal(String name, String type) throws Exception {
-        if(localVars.containsKey(name))
-            throw new Exception(
-                "Variable " + name +
-                " already defined in method " +
-                this.name
-            );
         localVars.put(name, type);
     }
 
