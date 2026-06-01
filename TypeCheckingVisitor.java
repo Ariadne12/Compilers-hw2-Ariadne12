@@ -39,9 +39,11 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, null);
         System.out.println("Class: " + classname);
 
+        currentClass = symbolTable.findClass(classname);
         super.visit(n, argu);
 
         System.out.println();
+        currentClass = null;
 
         return null;
     }
@@ -88,6 +90,8 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, null);
         System.out.println("Class: " + classname);
 
+        currentClass = symbolTable.findClass(classname);
+
         n.f2.accept(this, argu);
         n.f3.accept(this, argu);
         n.f4.accept(this, argu);
@@ -98,7 +102,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         n.f7.accept(this, argu);
 
         System.out.println();
-
+        currentClass = null;
         return null;
     }
 
@@ -134,15 +138,24 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(MethodDeclaration n, Void argu) throws Exception {
-        String argumentList = n.f4.present() ? n.f4.accept(this, null) : "";
+        String returnType = n.f1.accept(this, null);
+        String methodName = n.f2.accept(this, null);
+        currentMethod = new MethData(methodName, returnType);
 
-        String myType = n.f1.accept(this, null);
-        String myName = n.f2.accept(this, null);
+        String paramString = "";
+        if (n.f4.present()) {
+            paramString = n.f4.accept(this, null);
+            for (String t : paramString.split(",")) {
+                currentMethod.addParam(null, t.trim());
+            }
+        }
 
-        System.out.println("Method: " + myType + " " + myName + " (" + argumentList + ")");
+        System.out.println("Method: " + returnType + " " + methodName + " (" + paramString + ")");
         System.out.println("Local vars:");
 
-        super.visit(n, argu);
+        n.f7.accept(this, argu); // local vars
+        n.f8.accept(this, argu); // statements
+        currentMethod = null;
         return null;
     }
 
@@ -177,14 +190,12 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         MethData messageMethod = new MethData(messageMethodName, null);
 
         // Collect the argument types (if any)
-        List<String> paramTypes = new ArrayList<>();
         if (n.f4.present()) {
             // ExpressionList returns "type1,type2,..." so we will need to divide them manually
-            // or maybe just do a visit on f4 lmao. we'll test it
             String paramString = n.f4.accept(this, null);
             for (String t : paramString.split(",")) {
                 // again keeping the name of the parameters null since they do not matter in this instance
-                currentMethod.addParam(null, t.trim());
+                messageMethod.addParam(null, t.trim());
             }
         }
 
@@ -248,6 +259,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
         return n.f0.accept(this, null);
     }
 
+    // returns type
     @Override
     public String visit(PrimaryExpression n, Void argu) throws Exception {
         return n.f0.accept(this, null);
