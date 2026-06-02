@@ -35,7 +35,7 @@ public class SymbolTable {
         return null;
     }
 
-    public String findVar(String name, MethData currentMethod, ClassData currentClass) {
+    public String findVar(String name, MethData currentMethod, ClassData currentClass, boolean shadowCheck) {
         // inside the method
         // local variables
         if (currentMethod != null &&
@@ -52,13 +52,15 @@ public class SymbolTable {
 
         // outside the method
         // fields + inherited fields
-        ClassData c = currentClass;
-        while (c != null) {
-            if (c.fields.containsKey(name))
-                return c.fields.get(name);
-            if (c.parent == null)
-                break;
-            c = classes.get(c.parent);
+        if (shadowCheck == false) {
+            ClassData c = currentClass;
+            while (c != null) {
+                if (c.fields.containsKey(name))
+                    return c.fields.get(name);
+                if (c.parent == null)
+                    break;
+                c = classes.get(c.parent);
+            }
         }
         return null;
     }
@@ -115,7 +117,6 @@ public class SymbolTable {
                     );
                 }
             }
-            System.err.println("overload");
             return true;
         }
         else {

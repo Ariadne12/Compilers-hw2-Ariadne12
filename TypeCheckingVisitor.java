@@ -328,7 +328,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     public String visit(PrimaryExpression n, Void argu) throws Exception {
         if (n.f0.choice instanceof Identifier) {
             String name = ((Identifier) n.f0.choice).f0.toString();
-            String type = symbolTable.findVar(name, currentMethod, currentClass);
+            String type = symbolTable.findVar(name, currentMethod, currentClass, false);
             if (type == null)
                 throw new Exception("Undeclared variable: " + name);
             return type;
@@ -441,7 +441,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(AssignmentStatement n, Void argu) throws Exception{
         String varName = n.f0.accept(this, null);
-        String varType = symbolTable.findVar(varName, currentMethod, currentClass);
+        String varType = symbolTable.findVar(varName, currentMethod, currentClass, false);
         // not sure
         if (varType == null)
             throw new Exception(
@@ -462,7 +462,7 @@ class TypeCheckingVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(ArrayAssignmentStatement n, Void argu) throws Exception {
         String arrName = n.f0.accept(this, null);
-        String arrType = symbolTable.findVar(arrName, currentMethod, currentClass);
+        String arrType = symbolTable.findVar(arrName, currentMethod, currentClass, false);
 
         if(arrType == null)
             throw new Exception(

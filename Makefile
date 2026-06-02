@@ -8,3 +8,5 @@ compile:
 clean:
 	rm -rf *.class syntaxtree visitor minijava-jtb.jj *~
 
+distclean: clean
+	rm -rf *.class *Parser*.java ParseException.java Token.java TokenMgrError.java JavaCharStream.java *~ 

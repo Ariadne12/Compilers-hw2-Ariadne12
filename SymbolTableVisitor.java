@@ -185,13 +185,13 @@ class SymbolTableVisitor extends GJDepthFirst<String, Void>{
         if (currentMethod != null) {
             // inside method: local variables
             // check if we have seen this variable before
-            if (symbolTable.findVar(varname, currentMethod, currentClass) == null)
+            if (symbolTable.findVar(varname, currentMethod, currentClass, true) == null)
                 currentMethod.addLocal(varname, type);
             else
                 throw new Exception(
                     "Variable " + varname +
                     " already defined in method " +
-                    currentMethod.name
+                    currentMethod.name + "(" + currentMethod.getParameterString() + ")"
                 );
         } 
         else if (currentClass != null) {
